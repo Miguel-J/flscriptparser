@@ -1,3 +1,4 @@
+from __future__ import print_function
 # ----------------------------------------------------------------------
 # clex.py
 #
@@ -8,15 +9,17 @@
 #sys.path.insert(0,"../..")
 
 import ply.lex as lex
+from ply.lex import TOKEN
+
 
 # Reserved words
 reserved = [
     'BREAK', 'CASE', 'CONST', 'STATIC', 'CONTINUE', 'DEFAULT', 'DO',
     'ELSE', 'FOR', 'IF', 'IN',
-    'RETURN', 
-    #'STRUCT', 
-    'SWITCH', 
-    'WHILE', 'CLASS', 'VAR', 'FUNCTION', 
+    'RETURN',
+    #'STRUCT',
+    'SWITCH',
+    'WHILE', 'CLASS', 'VAR', 'FUNCTION',
     'EXTENDS', 'NEW','WITH','TRY','CATCH','THROW', 'DELETE', 'TYPEOF'
     ]
 token_literals = [
@@ -27,13 +30,13 @@ tokens = reserved + token_literals + [
 
     # Operators (+,-,*,/,%,|,&,~,^,<<,>>, ||, &&, !, <, <=, >, >=, ==, !=)
     'PLUS', 'MINUS', 'TIMES', 'DIVIDE', 'MOD',
-    'OR', 'AND',  
+    'OR', 'AND',
     'CONDITIONAL1','AT',
-    #'NOT', 
+    #'NOT',
     'XOR', 'LSHIFT', 'RSHIFT',
     'LOR', 'LAND', 'LNOT',
     'LT', 'LE', 'GT', 'GE', 'EQ', 'NE', 'EQQ', 'NEQ',
-    
+
     # Assignment (=, *=, /=, %=, +=, -=, <<=, >>=, &=, ^=, |=)
     'EQUALS', 'TIMESEQUAL', 'DIVEQUAL', 'MODEQUAL', 'PLUSEQUAL', 'MINUSEQUAL',
 #    'LSHIFTEQUAL','RSHIFTEQUAL', 'ANDEQUAL', 'XOREQUAL', 'OREQUAL',
@@ -46,7 +49,7 @@ tokens = reserved + token_literals + [
 
     # Conditional operator (?)
 #    'CONDOP',
-    
+
     # Delimeters ( ) [ ] { } , . ; :
     'LPAREN', 'RPAREN',
     'LBRACKET', 'RBRACKET',
@@ -57,7 +60,7 @@ tokens = reserved + token_literals + [
 #    'ELLIPSIS',
     'DOCSTRINGOPEN',
  #   'COMMENTOPEN',
-    'COMMENTCLOSE', 
+    'COMMENTCLOSE',
     'DOLLAR',
     'SQOUTE',
     'DQOUTE',
@@ -68,10 +71,10 @@ tokens = reserved + token_literals + [
 t_ignore           = ' \r\t\x0c'
 
 # Newlines
+@TOKEN(r'\n+')
 def t_NEWLINE(t):
-    r'\n+'
     t.lexer.lineno += t.value.count("\n")
-    
+
 # Operators
 t_BACKSLASH       = '\\\\'
 t_DOLLAR             = r'\$'
@@ -149,9 +152,8 @@ for r in reserved:
 
 
 
+@TOKEN(r'[A-Za-z_]+[\w_]*')
 def t_ID(t):
-#    r'[A-Za-z_]+([\.]{0,1}[\w_]*)+'
-    r'[A-Za-z_]+[\w_]*'
     t.type = reserved_map.get(t.value,"ID")
     return t
 
@@ -164,46 +166,47 @@ t_ICONST = r'\d+([uU]|[lL]|[uU][lL]|[lL][uU])?'
 t_FCONST = r'((\d+)(\.\d+)(e(\+|-)?(\d+))? | (\d+)e(\+|-)?(\d+))([lL]|[fF])?'
 
 # String literal
-t_SCONST = r'\"([^\\\n]|(\\.))*?\"'
+t_SCONST = r'\"([^\"\\\n]|(\\.)|\\\n)*?\"'
 
 # Character constant 'c' or L'c'
-t_CCONST = r'\'([^\\\n]|(\\.))*?\''
+t_CCONST = r'\'([^\'\\\n]|(\\.)|\\\n)*?\''
 
-# REGEX constant 
+# REGEX constant
 #t_RXCONST = r'/[^/ ]+/g?'
 
 # Comments
+@TOKEN(r'(/\*( |\*\*)(.|\n)*?\*/)|(//.*)')
 def t_comment(t):
-    r'(/\*( |\*\*)(.|\n)*?\*/)|(//.*)'
-    #r'/\*(.|\n)*?\*/'
     t.lexer.lineno += t.value.count('\n')
 
 
+@TOKEN(r'/\*\*[ ]+')
 def t_DOCSTRINGOPEN(t):
-    r'/\*\*[ ]+'
     return t;
 
 #t_COMMENTOPEN      = r'/\*'
 t_COMMENTCLOSE     = r'\*/'
 
- 
+
 # Preprocessor directive (ignored)
+@TOKEN(r'\#(.)*?\n')
 def t_preprocessor(t):
-    r'\#(.)*?\n'
     t.lexer.lineno += 1
 
-    
+
 def t_error(t):
-    print "Illegal character %s" % repr(t.value[0])
+    print("Illegal character %s" % repr(t.value[0]))
     t.lexer.skip(1)
 
 
-    
-lexer = lex.lex(debug=False)
+# TODO: Cada vez que se cambia este fichero, se tiene que lanzar sin el "-OO" de python para acelerar. Construye entonces
+# ..... el fichero de cache que subimos a git, y se relee desde ahí las siguientes veces con el -OO.
+# ..... Si da problemas, hay que volver a optimize=0 y/o eliminar lextab.py
+lexer = lex.lex(debug=False,optimize=1)
 if __name__ == "__main__":
     lex.runmain(lexer)
 
-    
+
 
 
 
